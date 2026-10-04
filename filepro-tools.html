@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FilePro Tools — Simple tools for your everyday files</title>
+<meta name="description" content="Compress, resize and convert images, turn JPGs into PDFs, merge PDFs and make QR codes. Everything runs in your browser — your files are never uploaded.">
+<meta property="og:title" content="FilePro Tools">
+<meta property="og:description" content="Simple tools for your everyday files. Private, fast, runs in your browser.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1F5F7; --surface:#FFFFFF; --ink:#14232E; --muted:#556772; --line:#D3DDE3;
+  --accent:#0B6E78; --accent-ink:#FFFFFF; --accent-soft:#DCEFF1; --mark:#FFC53D;
+  --danger:#B3261E; --ok:#16794A;
+  --head:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1920; --surface:#15252E; --ink:#E6EEF2; --muted:#93A5B1; --line:#263B47;
+    --accent:#4FCBD6; --accent-ink:#05262A; --accent-soft:#143840; --danger:#FF8A80; --ok:#6FD6A0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1920; --surface:#15252E; --ink:#E6EEF2; --muted:#93A5B1; --line:#263B47;
+  --accent:#4FCBD6; --accent-ink:#05262A; --accent-soft:#143840; --danger:#FF8A80; --ok:#6FD6A0;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--head);line-height:1.1;margin:0;letter-spacing:-.02em}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font:800 20px var(--head);letter-spacing:-.02em}
+.brand svg{width:30px;height:30px}
+.hnav{display:flex;align-items:center;gap:6px}
+.hnav a.lnk{color:var(--ink);text-decoration:none;font-weight:500;padding:10px 12px;border-radius:8px}
+.hnav a.lnk:hover{background:var(--accent-soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 20px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 15px var(--body);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.sm{min-height:40px;padding:0 14px;font-size:14px}
+.theme{min-width:64px}
+
+/* hero */
+.hero{padding:44px 0 28px}
+.hero h1{font-size:clamp(34px,7vw,60px);font-weight:800;max-width:15ch}
+.hero p.sub{font-size:clamp(17px,2.4vw,20px);color:var(--muted);max-width:52ch;margin:16px 0 0}
+.herodrop{margin-top:28px}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:34px 20px;min-height:170px;border:2px dashed var(--line);border-radius:16px;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.drop svg{width:34px;height:34px;color:var(--accent)}
+.drop strong{font:700 19px var(--head)}
+.drop small{color:var(--muted)}
+.drop:hover{border-color:var(--accent)}
+.drop.over{border-color:var(--mark);border-style:solid;background:color-mix(in srgb,var(--mark) 18%,var(--surface))}
+
+/* tool directory */
+.sec-title{font-size:26px;margin:40px 0 14px}
+.tools{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;list-style:none;padding:0;margin:0}
+.tools a,.tools .soon{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);text-decoration:none;color:var(--ink);min-height:92px}
+.tools a:hover{border-color:var(--accent)}
+.tools .ic{flex:none;width:44px;height:44px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.tools .ic svg{width:24px;height:24px}
+.tools b{display:block;font:700 17px var(--head);margin-bottom:2px}
+.tools span.d{color:var(--muted);font-size:14.5px}
+.tools .soon{opacity:.62;border-style:dashed}
+.tools .tag{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.note{margin-top:14px;color:var(--muted);font-size:14.5px}
+
+/* tool page */
+.tp{padding:26px 0 40px}
+.crumb{display:inline-flex;align-items:center;min-height:44px;color:var(--muted);text-decoration:none;font-weight:500}
+.tp h1{font-size:clamp(30px,5.5vw,44px);font-weight:800;margin:4px 0 8px}
+.tp .lead{color:var(--muted);max-width:60ch;margin:0 0 22px}
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:18px;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.fld{display:flex;flex-direction:column;gap:6px;font-weight:500;font-size:14.5px}
+.fld span{display:flex;justify-content:space-between;gap:8px}
+.fld output{color:var(--accent);font-weight:600}
+input[type=text],input[type=number],input[type=url],input[type=email],input[type=tel],select,textarea{width:100%;min-height:46px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:400 16px var(--body)}
+textarea{min-height:90px;resize:vertical}
+input[type=range]{width:100%;height:32px;accent-color:var(--accent)}
+input[type=color]{width:100%;height:46px;padding:4px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg)}
+.chk{display:flex;align-items:center;gap:10px;min-height:46px;font-weight:500}
+.chk input{width:22px;height:22px;accent-color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;gap:12px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface)}
+.row .th{flex:none;width:56px;height:56px;border-radius:8px;overflow:hidden;background:var(--bg);display:grid;place-items:center}
+.row .th img{max-width:100%;max-height:100%;object-fit:contain}
+.row .th .pdfi{font:800 13px var(--head);color:var(--accent)}
+.row .tx{flex:1;min-width:0}
+.row .tx b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .tx small{color:var(--muted)}
+.rb{display:flex;gap:4px;flex:none}
+.ib{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:18px;cursor:pointer}
+.ib:hover:not([disabled]){border-color:var(--accent)}
+.ib[disabled]{opacity:.35;cursor:not-allowed}
+.prog{margin-top:14px;font-weight:600}
+.prog .meter{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.prog .meter i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.res{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface)}
+.cmp{display:flex;gap:6px}
+.cmp figure{margin:0;text-align:center}
+.cmp img{display:block;width:72px;height:72px;object-fit:cover;border-radius:8px;background:var(--bg)}
+.cmp figcaption{font-size:11.5px;color:var(--muted)}
+.res .meta{min-width:0;display:flex;flex-direction:column;gap:2px}
+.res .meta b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res .meta small{color:var(--muted)}
+.res .act{grid-column:1/-1}
+.save{color:var(--ok);font-weight:700}
+.fail{color:var(--danger)}
+.summary{margin-top:18px;padding:14px 16px;border-radius:12px;background:var(--accent-soft);font-weight:600}
+.qr{display:grid;grid-template-columns:1fr;gap:14px}
+.qr .view{display:flex;flex-direction:column;align-items:center;gap:12px}
+.qr canvas{max-width:100%;height:auto;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+.qr .empty{color:var(--muted);padding:40px 10px;text-align:center}
+.warn{color:var(--danger);font-size:14px;font-weight:500}
+details{border-bottom:1px solid var(--line);padding:12px 0}
+details summary{cursor:pointer;font-weight:600;min-height:32px}
+details p{margin:8px 0 0;color:var(--muted);max-width:68ch}
+.about{margin-top:34px}
+.about h2{font-size:22px;margin-bottom:8px}
+.about p{color:var(--muted);max-width:68ch}
+footer{margin-top:40px;border-top:1px solid var(--line);padding:26px 0 40px;color:var(--muted);font-size:14.5px}
+footer .links{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:10px;font-weight:500;opacity:0;pointer-events:none;transition:.2s;z-index:20;max-width:90vw}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (min-width:760px){
+  .qr{grid-template-columns:1.2fr 1fr}
+  .res{grid-template-columns:auto 1fr auto}
+  .res .act{grid-column:auto}
+}
+@media (max-width:640px){
+  .tools{grid-template-columns:1fr}
+  .hnav a.lnk{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#/" aria-label="FilePro Tools home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 3h11l7 7v17a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="var(--accent)"/><path d="M19 3v5a2 2 0 0 0 2 2h5z" fill="var(--mark)"/><path d="M11 20h8m0 0-3-3m3 3-3 3" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    FilePro Tools
+  </a>
+  <nav class="hnav" aria-label="Main">
+    <a class="lnk" href="#/tools">All tools</a>
+    <button class="btn sm theme" id="theme" type="button" aria-label="Change colour theme">Auto</button>
+  </nav>
+</div></header>
+<main id="app" class="wrap" tabindex="-1"></main>
+<footer><div class="wrap">
+  <strong>FilePro Tools</strong> — Simple tools for your everyday files.
+  <div>Your files stay on your device. These tools run in your browser and nothing you select is uploaded.</div>
+  <div class="links" id="flinks"></div>
+</div></footer>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+"use strict";
+/* ---------- limits (edit here) ---------- */
+const MAX_MB = 25;       // per file
+const MAX_FILES = 20;    // per operation
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB';
+const tick = () => new Promise(r => setTimeout(r, 0));
+const baseName = n => n.replace(/\.[^.]+$/, '');
+const mimeOf = f => {
+  if (/^image\/(jpeg|png|webp)$/.test(f.type)) return f.type;
+  if (/\.png$/i.test(f.name)) return 'image/png';
+  if (/\.webp$/i.test(f.name)) return 'image/webp';
+  return 'image/jpeg';
+};
+const extOf = t => t === 'image/png' ? 'png' : t === 'image/webp' ? 'webp' : 'jpg';
+let PENDING = null;
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 3400);
+}
+
+async function saveFile(name, blob) {
+  try {
+    const d = window.claude ? await window.claude.use('downloads') : null;
+    if (d) { await d.save({ filename: name, data: blob }); toast('Saved ' + name); return; }
+  } catch (e) {
+    if (e && e.code === 'declined') return;
+    toast('Could not save the file. Please try again.'); return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+async function zipAndSave(entries, zipName) {
+  const z = new JSZip(), used = new Set();
+  for (const { name, blob } of entries) {
+    let n = name, i = 1;
+    while (used.has(n)) n = name.replace(/(\.[^.]+)$/, `-${i++}$1`);
+    used.add(n); z.file(n, blob);
+  }
+  const blob = await z.generateAsync({ type: 'blob', compression: 'STORE' });
+  await saveFile(zipName, blob);
+}
+
+function loadImg(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => res({ img, url });
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
+    img.src = url;
+  });
+}
+const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type, q));
+
+const ACCEPT_IMG = {
+  attr: '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp',
+  test: f => /^image\/(jpeg|png|webp)$/.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name),
+  word: 'JPG, PNG or WebP images'
+};
+const ACCEPT_PDF = {
+  attr: '.pdf,application/pdf',
+  test: f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name),
+  word: 'PDF files'
+};
+
+const ICONS = {
+  compress: '<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/>',
+  resize: '<path d="M21 3l-7 7M21 3h-6M21 3v6M3 21l7-7M3 21h6M3 21v-6"/>',
+  convert: '<path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/>',
+  pdf: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 14h6M9 17h4"/>',
+  merge: '<path d="M6 3v6a4 4 0 0 0 4 4h4a4 4 0 0 1 4 4v4M18 3v6M6 21v-4"/>',
+  qr: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>',
+  img: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
+  text: '<path d="M4 7V4h16v3M9 20h6M12 4v16"/>'
+};
+const icon = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
+
+/* ---------- dropzone ---------- */
+function dropzone(host, { accept, multiple = true, title, hint, onFiles }) {
+  host.innerHTML = `<div class="drop" tabindex="0" role="button" aria-label="${esc(title)}. Press Enter to choose files.">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+    <strong>${esc(title)}</strong><span>or <u>choose files</u></span><small>${esc(hint)}</small>
+    <input type="file" class="sr" tabindex="-1" ${multiple ? 'multiple' : ''} accept="${accept.attr}"></div>`;
+  const d = $('.drop', host), inp = $('input', host);
+  d.onclick = () => inp.click();
+  inp.onclick = e => e.stopPropagation();
+  d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inp.click(); } };
+  ['dragenter', 'dragover'].forEach(ev => d.addEventListener(ev, e => { e.preventDefault(); d.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => d.addEventListener(ev, e => { e.preventDefault(); d.classList.remove('over'); }));
+  d.addEventListener('drop', e => take([...e.dataTransfer.files]));
+  inp.onchange = () => { take([...inp.files]); inp.value = ''; };
+  function take(files) {
+    const ok = []; let bad = 0, big = 0;
+    for (const f of files) {
+      if (!accept.test(f)) bad++;
+      else if (f.size > MAX_MB * 1048576) big++;
+      else ok.push(f);
+    }
+    if (bad) toast(`${bad} file${bad > 1 ? 's were' : ' was'} skipped. This tool accepts ${accept.word}.`);
+    else if (big) toast(`${big} file${big > 1 ? 's are' : ' is'} over the ${MAX_MB} MB limit and ${big > 1 ? 'were' : 'was'} skipped.`);
+    if (ok.length) onFiles(ok);
+  }
+}
+
+/* ---------- ordered list (move / remove / extra actions) ---------- */
+function orderList(ul, items, { left, acts = [], onAct, onChange }) {
+  ul.innerHTML = items.map((it, i) => `<li class="row" data-i="${i}">${left(it, i)}<div class="rb">
+    ${acts.map(a => `<button type="button" class="ib" data-a="${a.id}" aria-label="${a.label}" title="${a.label}">${a.ch}</button>`).join('')}
+    <button type="button" class="ib" data-a="up" ${i === 0 ? 'disabled' : ''} aria-label="Move up" title="Move up">↑</button>
+    <button type="button" class="ib" data-a="down" ${i === items.length - 1 ? 'disabled' : ''} aria-label="Move down" title="Move down">↓</button>
+    <button type="button" class="ib" data-a="rm" aria-label="Remove" title="Remove">✕</button></div></li>`).join('');
+  ul.onclick = e => {
+    const b = e.target.closest('button[data-a]'); if (!b || b.disabled) return;
+    const i = +b.closest('li').dataset.i, a = b.dataset.a;
+    if (a === 'up') [items[i - 1], items[i]] = [items[i], items[i - 1]];
+    else if (a === 'down') [items[i + 1], items[i]] = [items[i], items[i + 1]];
+    else if (a === 'rm') { onAct && onAct('rm', items[i]); items.splice(i, 1); }
+    else onAct && onAct(a, items[i]);
+    onChange();
+  };
+}
+
+const rangeF = (id, label, min, max, val, unit = '%') =>
+  `<label class="fld"><span>${label} <output id="${id}o">${val}${unit}</output></span><input type="range" id="${id}" min="${min}" max="${max}" value="${val}"></label>`;
+function bindRanges(host, unit = '%') {
+  host.querySelectorAll('input[type=range]').forEach(r => r.addEventListener('input', () => { const o = $('#' + r.id + 'o', host); if (o) o.textContent = r.value + unit; }));
+}
+
+/* ---------- image tools (compress / resize / convert) ---------- */
+function imageTool(host, mode) {
+  const items = []; let results = [];
+  const optsHTML = {
+    compress: `<div class="grid">
+      ${rangeF('q', 'Quality', 10, 100, 75)}
+      <label class="fld"><span>Target size in KB (optional)</span><input type="number" id="tk" min="5" inputmode="numeric" placeholder="e.g. 200"></label>
+      <label class="fld"><span>Max width in px (optional)</span><input type="number" id="mw" min="16" inputmode="numeric" placeholder="e.g. 1920"></label>
+      <label class="fld"><span>Output format</span><select id="fmt"><option value="auto">Smart (PNG becomes WebP)</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select></label></div>`,
+    resize: `<div class="grid">
+      <label class="fld"><span>Resize by</span><select id="rm"><option value="percent">Percentage</option><option value="width">Width</option><option value="height">Height</option><option value="custom">Custom width and height</option></select></label>
+      <label class="fld" id="f_pct"><span>Percentage</span><input type="number" id="pct" min="1" max="400" value="50" inputmode="numeric"></label>
+      <label class="fld" id="f_w" hidden><span>Width in px</span><input type="number" id="w" min="1" inputmode="numeric"></label>
+      <label class="fld" id="f_h" hidden><span>Height in px</span><input type="number" id="h" min="1" inputmode="numeric"></label>
+      <label class="chk" id="f_lock" hidden><input type="checkbox" id="lock" checked> Lock aspect ratio</label>
+      <label class="fld"><span>Output format</span><select id="fmt"><option value="same">Same as original</option><option value="jpeg">JPG</option><option value="png">PNG</option><option value="webp">WebP</option></select></label>
+      ${rangeF('q', 'Quality', 10, 100, 85)}</div>`,
+    convert: `<div class="grid">
+      <label class="fld"><span>Convert to</span><select id="fmt"><option value="png">PNG</option><option value="jpeg">JPG</option><option value="webp" selected>WebP</option></select></label>
+      ${rangeF('q', 'Quality (JPG and WebP)', 10, 100, 90)}
+      <label class="fld"><span>Max width in px (optional)</span><input type="number" id="mw" min="16" inputmode="numeric" placeholder="Keep original size"></label></div>
+      <p class="note">Transparent areas are kept for PNG and WebP. For JPG they become white.</p>`
+  };
+  const goLabel = { compress: 'Compress images', resize: 'Resize images', convert: 'Convert images' }[mode];
+  host.innerHTML = `<div id="dz"></div>
+    <div class="panel" id="opts" hidden>${optsHTML[mode]}</div>
+    <ul class="list" id="list" aria-label="Selected images"></ul>
+    <div class="bar" id="bar" hidden><button class="btn primary" id="go" type="button">${goLabel}</button><button class="btn" id="clear" type="button">Clear all</button></div>
+    <div class="prog" id="prog" role="status" aria-live="polite"></div>
+    <div id="out"></div>`;
+  bindRanges(host);
+  const rm = $('#rm', host);
+  if (rm) rm.onchange = syncResizeFields;
+  function syncResizeFields() {
+    const v = rm.value;
+    $('#f_pct', host).hidden = v !== 'percent';
+    $('#f_w', host).hidden = !(v === 'width' || v === 'custom');
+    $('#f_h', host).hidden = !(v === 'height' || v === 'custom');
+    $('#f_lock', host).hidden = v !== 'custom';
+  }
+
+  dropzone($('#dz', host), { accept: ACCEPT_IMG, title: 'Drop your images here', hint: `JPG, PNG or WebP · up to ${MAX_FILES} files · ${MAX_MB} MB each`, onFiles: add });
+
+  function add(files) {
+    for (const f of files) {
+      if (items.length >= MAX_FILES) { toast(`You can process up to ${MAX_FILES} files at a time.`); break; }
+      const it = { file: f, url: URL.createObjectURL(f), dim: '' };
+      items.push(it);
+      const im = new Image();
+      im.onload = () => { it.dim = `${im.naturalWidth}×${im.naturalHeight}`; it.W = im.naturalWidth; it.H = im.naturalHeight; draw(); };
+      im.src = it.url;
+    }
+    draw();
+  }
+  function draw() {
+    $('#opts', host).hidden = !items.length; $('#bar', host).hidden = !items.length;
+    orderList($('#list', host), items, {
+      left: it => `<div class="th"><img src="${it.url}" alt="Preview of ${esc(it.file.name)}"></div><div class="tx"><b>${esc(it.file.name)}</b><small>${fmt(it.file.size)}${it.dim ? ' · ' + it.dim : ''}</small></div>`,
+      onAct: (a, it) => { if (a === 'rm') URL.revokeObjectURL(it.url); },
+      onChange: draw
+    });
+    // images list does not need reordering buttons for single-purpose tools: hide up/down
+    $('#list', host).querySelectorAll('[data-a=up],[data-a=down]').forEach(b => b.remove());
+  }
+  $('#clear', host).onclick = () => { items.forEach(i => URL.revokeObjectURL(i.url)); items.length = 0; clearResults(); draw(); };
+
+  function readOpts() {
+    const n = id => { const e = $('#' + id, host); return e && e.value ? +e.value : 0; };
+    const s = id => { const e = $('#' + id, host); return e ? e.value : ''; };
+    return { q: n('q') / 100, tk: n('tk'), mw: n('mw'), rm: s('rm'), pct: n('pct'), w: n('w'), h: n('h'), lock: !!($('#lock', host) && $('#lock', host).checked), fmt: s('fmt') };
+  }
+  function outType(file, choice) {
+    if (choice === 'auto' || choice === 'same') {
+      const t = mimeOf(file);
+      if (t === 'image/png') return mode === 'compress' ? 'image/webp' : 'image/png';
+      return t;
+    }
+    return { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }[choice];
+  }
+  function dims(W, H, o) {
+    if (mode === 'resize') {
+      if (o.rm === 'percent') return [Math.max(1, Math.round(W * o.pct / 100)), Math.max(1, Math.round(H * o.pct / 100))];
+      if (o.rm === 'width') return [o.w, Math.max(1, Math.round(H * o.w / W))];
+      if (o.rm === 'height') return [Math.max(1, Math.round(W * o.h / H)), o.h];
+      if (o.lock) return o.w ? [o.w, Math.max(1, Math.round(H * o.w / W))] : [Math.max(1, Math.round(W * o.h / H)), o.h];
+      return [o.w, o.h];
+    }
+    if (o.mw && W > o.mw) return [o.mw, Math.max(1, Math.round(H * o.mw / W))];
+    return [W, H];
+  }
+  function validate(o) {
+    if (mode !== 'resize') return '';
+    if (o.rm === 'percent' && !(o.pct > 0)) return 'Enter a percentage greater than 0.';
+    if (o.rm === 'width' && !o.w) return 'Enter a width in pixels.';
+    if (o.rm === 'height' && !o.h) return 'Enter a height in pixels.';
+    if (o.rm === 'custom' && (o.lock ? !(o.w || o.h) : !(o.w && o.h))) return o.lock ? 'Enter a width or a height.' : 'Enter both a width and a height.';
+    return '';
+  }
+
+  async function processOne(file, o) {
+    const { img, url } = await loadImg(file);
+    try {
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const [tw, th] = dims(W, H, o);
+      if (tw * th > 80e6) throw new Error('too big');
+      const type = outType(file, o.fmt);
+      const c = document.createElement('canvas'); c.width = tw; c.height = th;
+      const x = c.getContext('2d');
+      if (type === 'image/jpeg') { x.fillStyle = '#fff'; x.fillRect(0, 0, tw, th); }
+      x.imageSmoothingQuality = 'high';
+      x.drawImage(img, 0, 0, tw, th);
+      let blob;
+      if (mode === 'compress' && o.tk && type !== 'image/png') {
+        const target = o.tk * 1024; let lo = 0.05, hi = o.q || 0.75;
+        blob = await toBlob(c, type, hi);
+        if (blob && blob.size > target) {
+          let best = await toBlob(c, type, lo);
+          for (let i = 0; i < 7; i++) {
+            const mid = (lo + hi) / 2, b = await toBlob(c, type, mid);
+            if (b.size <= target) { best = b; lo = mid; } else hi = mid;
+          }
+          blob = best;
+        }
+      } else {
+        blob = await toBlob(c, type, o.q || 0.85);
+      }
+      if (!blob || blob.type !== type) throw new Error('This browser cannot create ' + type);
+      let kept = false;
+      if (mode === 'compress' && blob.size >= file.size && type === mimeOf(file) && tw === W) { blob = file; kept = true; }
+      const suffix = { compress: '-compressed', resize: '-resized', convert: '' }[mode];
+      const name = baseName(file.name) + suffix + '.' + extOf(blob === file ? mimeOf(file) : type);
+      return { blob, name, W, H, tw, th, kept };
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  function clearResults() {
+    results.forEach(r => r.url && URL.revokeObjectURL(r.url));
+    results = []; $('#out', host).innerHTML = ''; $('#prog', host).innerHTML = '';
+  }
+
+  $('#go', host).onclick = async () => {
+    if (!items.length) return;
+    const o = readOpts(), bad = validate(o);
+    if (bad) { toast(bad); return; }
+    clearResults();
+    const go = $('#go', host), prog = $('#prog', host);
+    go.disabled = true;
+    for (let i = 0; i < items.length; i++) {
+      prog.innerHTML = `Processing ${i + 1} of ${items.length} file${items.length > 1 ? 's' : ''}…<div class="meter"><i style="width:${Math.round(i / items.length * 100)}%"></i></div>`;
+      await tick();
+      const it = items[i];
+      try {
+        const r = await processOne(it.file, o);
+        r.url = URL.createObjectURL(r.blob); r.orig = it; results.push(r);
+      } catch (e) {
+        console.error(e);
+        results.push({ failed: true, orig: it });
+      }
+    }
+    go.disabled = false; prog.textContent = '';
+    showResults();
+  };
+
+  function showResults() {
+    const ok = results.filter(r => !r.failed), failed = results.length - ok.length;
+    const out = $('#out', host);
+    const totalIn = ok.reduce((a, r) => a + r.orig.file.size, 0), totalOut = ok.reduce((a, r) => a + r.blob.size, 0);
+    let sum = `${ok.length} file${ok.length === 1 ? '' : 's'} processed successfully`;
+    if (failed) sum += `. ${failed} could not be processed.`;
+    if (mode !== 'convert' && ok.length > 1 && totalIn) sum += ` Total ${fmt(totalIn)} → ${fmt(totalOut)}.`;
+    out.innerHTML = `<div class="summary" role="status">${sum}</div><ul class="list" id="rl"></ul>
+      <div class="bar">${ok.length > 1 ? '<button class="btn primary" id="zip" type="button">Download ZIP</button>' : ''}<button class="btn" id="more" type="button">Process more</button></div>`;
+    $('#rl', out).innerHTML = results.map((r, i) => {
+      if (r.failed) return `<li class="res"><div class="meta"><b>${esc(r.orig.file.name)}</b><small class="fail">Something went wrong while processing this file. Please try again.</small></div></li>`;
+      const pct = Math.round((1 - r.blob.size / r.orig.file.size) * 100);
+      const delta = r.kept ? 'Already well optimized — original kept' : (pct >= 0 ? `<span class="save">Saved ${pct}%</span>` : `<span>${-pct}% larger</span>`);
+      return `<li class="res"><div class="cmp"><figure><img src="${r.orig.url}" alt="Original ${esc(r.orig.file.name)}"><figcaption>Before</figcaption></figure><figure><img src="${r.url}" alt="Result ${esc(r.name)}"><figcaption>After</figcaption></figure></div>
+        <div class="meta"><b>${esc(r.name)}</b><small>${fmt(r.orig.file.size)} → ${fmt(r.blob.size)} · ${delta}</small><small>${r.W}×${r.H} → ${r.tw}×${r.th}</small></div>
+        <div class="act"><button class="btn sm" data-d="${i}" type="button">Download</button></div></li>`;
+    }).join('');
+    $('#rl', out).onclick = e => { const b = e.target.closest('[data-d]'); if (b) { const r = results[+b.dataset.d]; saveFile(r.name, r.blob); } };
+    const z = $('#zip', out); if (z) z.onclick = () => zipAndSave(ok.map(r => ({ name: r.name, blob: r.blob })), 'filepro-images.zip');
+    $('#more', out).onclick = () => { items.forEach(i => URL.revokeObjectURL(i.url)); items.length = 0; clearResults(); draw(); window.scrollTo({ top: 0 }); };
+    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (mode === 'resize') syncResizeFields();
+  if (PENDING && PENDING.every(ACCEPT_IMG.test)) { add(PENDING); }
+  PENDING = null;
+}
+
+/* ---------- JPG → PDF ---------- */
+function jpgToPdf(host) {
+  const items = [];
+  host.innerHTML = `<div id="dz"></div>
+    <ul class="list" id="list" aria-label="Pages in order"></ul>
+    <div class="panel" id="opts" hidden><div class="grid">
+      <label class="fld"><span>Page size</span><select id="ps"><option value="a4">A4</option><option value="letter">US Letter</option><option value="fit">Fit to image</option></select></label>
+      <label class="fld"><span>Orientation</span><select id="or"><option value="auto">Automatic</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+      <label class="fld"><span>Margin</span><select id="mg"><option value="0">None</option><option value="24" selected>Small</option><option value="48">Large</option></select></label>
+      ${rangeF('q', 'Image quality', 30, 100, 85)}
+      <label class="fld"><span>PDF file name</span><input type="text" id="fn" value="images.pdf" maxlength="80"></label></div></div>
+    <div class="bar" id="bar" hidden><button class="btn primary" id="go" type="button">Create PDF</button><button class="btn" id="clear" type="button">Clear all</button></div>
+    <div class="prog" id="prog" role="status" aria-live="polite"></div><div id="out"></div>`;
+  bindRanges(host);
+  $('#ps', host).onchange = () => { $('#or', host).disabled = $('#ps', host).value === 'fit'; $('#mg', host).disabled = $('#ps', host).value === 'fit'; };
+  dropzone($('#dz', host), { accept: ACCEPT_IMG, title: 'Drop your images here', hint: `Each image becomes one page · up to ${MAX_FILES} images`, onFiles: files => {
+    for (const f of files) { if (items.length >= MAX_FILES) { toast(`You can add up to ${MAX_FILES} images.`); break; } items.push({ file: f, url: URL.createObjectURL(f), rot: 0 }); }
+    draw();
+  } });
+  function draw() {
+    $('#opts', host).hidden = !items.length; $('#bar', host).hidden = !items.length;
+    orderList($('#list', host), items, {
+      left: (it, i) => `<div class="th"><img src="${it.url}" alt="Page ${i + 1}" style="transform:rotate(${it.rot}deg)"></div><div class="tx"><b>${i + 1}. ${esc(it.file.name)}</b><small>${fmt(it.file.size)}${it.rot ? ' · rotated ' + it.rot + '°' : ''}</small></div>`,
+      acts: [{ id: 'rot', label: 'Rotate 90 degrees', ch: '↻' }],
+      onAct: (a, it) => { if (a === 'rot') it.rot = (it.rot + 90) % 360; if (a === 'rm') URL.revokeObjectURL(it.url); },
+      onChange: draw
+    });
+  }
+  $('#clear', host).onclick = () => { items.forEach(i => URL.revokeObjectURL(i.url)); items.length = 0; $('#out', host).innerHTML = ''; draw(); };
+
+  async function prepare(it, q) {
+    const { img, url } = await loadImg(it.file);
+    try {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      const s = Math.min(1, 3000 / Math.max(w, h)); w = Math.round(w * s); h = Math.round(h * s);
+      const swap = it.rot % 180 !== 0, cw = swap ? h : w, ch = swap ? w : h;
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cw, ch);
+      x.translate(cw / 2, ch / 2); x.rotate(it.rot * Math.PI / 180); x.drawImage(img, -w / 2, -h / 2, w, h);
+      const blob = await toBlob(c, 'image/jpeg', q);
+      return { bytes: new Uint8Array(await blob.arrayBuffer()), w: cw, h: ch };
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  $('#go', host).onclick = async () => {
+    if (!items.length) return;
+    const go = $('#go', host), prog = $('#prog', host), out = $('#out', host);
+    go.disabled = true; out.innerHTML = '';
+    try {
+      const q = +$('#q', host).value / 100, ps = $('#ps', host).value, orn = $('#or', host).value, mg = +$('#mg', host).value;
+      const SIZES = { a4: [595.28, 841.89], letter: [612, 792] };
+      const doc = await PDFLib.PDFDocument.create();
+      for (let i = 0; i < items.length; i++) {
+        prog.innerHTML = `Processing ${i + 1} of ${items.length} image${items.length > 1 ? 's' : ''}…<div class="meter"><i style="width:${Math.round(i / items.length * 100)}%"></i></div>`;
+        await tick();
+        const { bytes, w, h } = await prepare(items[i], q);
+        const jpg = await doc.embedJpg(bytes);
+        let pw, ph, m = mg;
+        if (ps === 'fit') { pw = w * .75; ph = h * .75; m = 0; }
+        else { [pw, ph] = SIZES[ps]; const land = orn === 'landscape' || (orn === 'auto' && w > h); if (land) [pw, ph] = [ph, pw]; }
+        const page = doc.addPage([pw, ph]);
+        const sc = Math.min((pw - 2 * m) / w, (ph - 2 * m) / h), dw = w * sc, dh = h * sc;
+        page.drawImage(jpg, { x: (pw - dw) / 2, y: (ph - dh) / 2, width: dw, height: dh });
+      }
+      const data = await doc.save();
+      const blob = new Blob([data], { type: 'application/pdf' });
+      let name = ($('#fn', host).value || 'images').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\.pdf$/i, '') || 'images';
+      name += '.pdf';
+      out.innerHTML = `<div class="summary" role="status">PDF created with ${items.length} page${items.length > 1 ? 's' : ''} · ${fmt(blob.size)}</div>
+        <div class="bar"><button class="btn primary" id="dl" type="button">Download PDF</button><button class="btn" id="more" type="button">Process more</button></div>`;
+      $('#dl', out).onclick = () => saveFile(name, blob);
+      $('#more', out).onclick = () => $('#clear', host).click();
+      out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      console.error(e); out.innerHTML = `<div class="summary fail" role="alert">Something went wrong while processing these images. Please try again.</div>`;
+    }
+    prog.textContent = ''; go.disabled = false;
+  };
+  if (PENDING && PENDING.every(ACCEPT_IMG.test)) { PENDING.forEach(f => items.push({ file: f, url: URL.createObjectURL(f), rot: 0 })); draw(); }
+  PENDING = null;
+}
+
+/* ---------- Merge PDF ---------- */
+function mergePdf(host) {
+  const items = [];
+  host.innerHTML = `<div id="dz"></div>
+    <ul class="list" id="list" aria-label="PDFs in merge order"></ul>
+    <div class="panel" id="opts" hidden><label class="fld"><span>Output file name</span><input type="text" id="fn" value="merged.pdf" maxlength="80"></label></div>
+    <div class="bar" id="bar" hidden><button class="btn primary" id="go" type="button">Merge PDFs</button><button class="btn" id="clear" type="button">Clear all</button></div>
+    <div class="prog" id="prog" role="status" aria-live="polite"></div><div id="out"></div>`;
+  dropzone($('#dz', host), { accept: ACCEPT_PDF, title: 'Drop your PDFs here', hint: `Add two or more PDFs · up to ${MAX_FILES} files`, onFiles: addFiles });
+  async function addFiles(files) {
+    for (const f of files) {
+      if (items.length >= MAX_FILES) { toast(`You can merge up to ${MAX_FILES} files.`); break; }
+      const it = { file: f, pages: null, bad: false }; items.push(it);
+      f.arrayBuffer().then(b => PDFLib.PDFDocument.load(b)).then(d => { it.pages = d.getPageCount(); draw(); }).catch(() => { it.bad = true; draw(); });
+    }
+    draw();
+  }
+  function draw() {
+    $('#opts', host).hidden = !items.length; $('#bar', host).hidden = !items.length;
+    orderList($('#list', host), items, {
+      left: (it, i) => `<div class="th"><span class="pdfi">PDF</span></div><div class="tx"><b>${i + 1}. ${esc(it.file.name)}</b><small>${fmt(it.file.size)} · ${it.bad ? '<span class="fail">Can’t be read (damaged or password-protected)</span>' : it.pages === null ? 'Reading…' : it.pages + ' page' + (it.pages > 1 ? 's' : '')}</small></div>`,
+      onChange: draw
+    });
+  }
+  $('#clear', host).onclick = () => { items.length = 0; $('#out', host).innerHTML = ''; draw(); };
+  $('#go', host).onclick = async () => {
+    const good = items.filter(i => !i.bad);
+    if (good.length < 2) { toast('Add at least two readable PDFs to merge.'); return; }
+    const go = $('#go', host), prog = $('#prog', host), out = $('#out', host);
+    go.disabled = true; out.innerHTML = '';
+    try {
+      const merged = await PDFLib.PDFDocument.create();
+      for (let i = 0; i < good.length; i++) {
+        prog.innerHTML = `Processing ${i + 1} of ${good.length} files…<div class="meter"><i style="width:${Math.round(i / good.length * 100)}%"></i></div>`;
+        await tick();
+        const src = await PDFLib.PDFDocument.load(await good[i].file.arrayBuffer());
+        const pages = await merged.copyPages(src, src.getPageIndices());
+        pages.forEach(p => merged.addPage(p));
+      }
+      const blob = new Blob([await merged.save()], { type: 'application/pdf' });
+      let name = ($('#fn', host).value || 'merged').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\.pdf$/i, '') || 'merged';
+      name += '.pdf';
+      out.innerHTML = `<div class="summary" role="status">${good.length} PDFs merged into ${merged.getPageCount()} pages · ${fmt(blob.size)}</div>
+        <div class="bar"><button class="btn primary" id="dl" type="button">Download PDF</button><button class="btn" id="more" type="button">Process more</button></div>`;
+      $('#dl', out).onclick = () => saveFile(name, blob);
+      $('#more', out).onclick = () => $('#clear', host).click();
+      out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      console.error(e); out.innerHTML = `<div class="summary fail" role="alert">Something went wrong while merging these files. Please try again.</div>`;
+    }
+    prog.textContent = ''; go.disabled = false;
+  };
+  if (PENDING && PENDING.every(ACCEPT_PDF.test)) addFiles(PENDING);
+  PENDING = null;
+}
+
+/* ---------- QR code generator ---------- */
+function qrTool(host) {
+  const FIELDS = {
+    url: [['u', 'Web address', 'url', 'https://example.com']],
+    text: [['t', 'Text', 'area']],
+    wifi: [['ss', 'Network name', 'text'], ['pw', 'Password', 'text'], ['sec', 'Security', 'sel', ['WPA', 'WEP', 'nopass']], ['hid', 'Hidden network', 'chk']],
+    email: [['to', 'Email address', 'email'], ['sub', 'Subject', 'text'], ['bd', 'Message', 'area']],
+    phone: [['ph', 'Phone number', 'tel']],
+    sms: [['ph', 'Phone number', 'tel'], ['msg', 'Message', 'area']],
+    contact: [['fn', 'First name', 'text'], ['ln', 'Last name', 'text'], ['org', 'Organization', 'text'], ['ph', 'Phone', 'tel'], ['em', 'Email', 'email'], ['web', 'Website', 'url']]
+  };
+  const LABELS = { url: 'Web address (URL)', text: 'Text', wifi: 'Wi-Fi', email: 'Email', phone: 'Phone', sms: 'SMS', contact: 'Contact card' };
+  let logo = null, current = null;
+  host.innerHTML = `<div class="qr"><div>
+    <div class="panel" style="margin-top:0"><label class="fld"><span>QR code type</span><select id="type">${Object.keys(LABELS).map(k => `<option value="${k}">${LABELS[k]}</option>`).join('')}</select></label>
+      <div class="grid" id="fields" style="margin-top:14px"></div></div>
+    <div class="panel"><div class="grid">
+      ${rangeF('size', 'Size', 128, 1024, 320, ' px')}
+      <label class="fld"><span>Error correction</span><select id="ec"><option value="L">Low (7%)</option><option value="M" selected>Medium (15%)</option><option value="Q">Quartile (25%)</option><option value="H">High (30%)</option></select></label>
+      <label class="fld"><span>Foreground colour</span><input type="color" id="fg" value="#14232e"></label>
+      <label class="fld"><span>Background colour</span><input type="color" id="bg" value="#ffffff"></label>
+      <label class="fld"><span>Logo in the centre (optional)</span><input type="file" id="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>
+      <div class="chk" style="align-self:end"><button class="btn sm" id="nologo" type="button" hidden>Remove logo</button></div></div>
+      <p class="warn" id="warn" role="status"></p></div></div>
+    <div class="panel view" style="margin-top:0"><div class="empty" id="empty">Fill in the details to see your QR code.</div>
+      <canvas id="qc" hidden aria-label="Your QR code"></canvas>
+      <div class="bar" style="margin:0"><button class="btn primary" id="png" type="button" disabled>Download PNG</button><button class="btn" id="svg" type="button" disabled>Download SVG</button></div></div></div>`;
+  bindRanges(host, ' px');
+  const g = id => $('#' + id, host);
+
+  function buildFields() {
+    const t = g('type').value;
+    g('fields').innerHTML = FIELDS[t].map(([id, label, kind, extra]) => {
+      if (kind === 'area') return `<label class="fld" style="grid-column:1/-1"><span>${label}</span><textarea id="f_${id}"></textarea></label>`;
+      if (kind === 'sel') return `<label class="fld"><span>${label}</span><select id="f_${id}">${extra.map(o => `<option>${o}</option>`).join('')}</select></label>`;
+      if (kind === 'chk') return `<label class="chk"><input type="checkbox" id="f_${id}"> ${label}</label>`;
+      return `<label class="fld"><span>${label}</span><input type="${kind}" id="f_${id}" ${extra ? `placeholder="${extra}"` : ''} autocomplete="off"></label>`;
+    }).join('');
+    g('fields').querySelectorAll('input,select,textarea').forEach(e => e.addEventListener('input', render));
+    render();
+  }
+  const v = id => { const e = g('f_' + id); return e ? (e.type === 'checkbox' ? e.checked : e.value.trim()) : ''; };
+  const wesc = s => s.replace(/([\\;,:"])/g, '\\$1');
+  function payload() {
+    switch (g('type').value) {
+      case 'url': { const u = v('u'); if (!u) return ''; return /^[a-z][a-z0-9+.-]*:/i.test(u) ? u : 'https://' + u; }
+      case 'text': return v('t');
+      case 'wifi': { if (!v('ss')) return ''; const s = v('sec'); return `WIFI:T:${s};S:${wesc(v('ss'))};${s === 'nopass' ? '' : 'P:' + wesc(v('pw')) + ';'}${v('hid') ? 'H:true;' : ''};`; }
+      case 'email': { if (!v('to')) return ''; const q = []; if (v('sub')) q.push('subject=' + encodeURIComponent(v('sub'))); if (v('bd')) q.push('body=' + encodeURIComponent(v('bd'))); return 'mailto:' + v('to') + (q.length ? '?' + q.join('&') : ''); }
+      case 'phone': return v('ph') ? 'tel:' + v('ph').replace(/\s+/g, '') : '';
+      case 'sms': return v('ph') ? `SMSTO:${v('ph').replace(/\s+/g, '')}:${v('msg')}` : '';
+      case 'contact': {
+        if (!(v('fn') || v('ln'))) return '';
+        const L = ['BEGIN:VCARD', 'VERSION:3.0', `N:${v('ln')};${v('fn')};;;`, `FN:${(v('fn') + ' ' + v('ln')).trim()}`];
+        if (v('org')) L.push('ORG:' + v('org')); if (v('ph')) L.push('TEL:' + v('ph')); if (v('em')) L.push('EMAIL:' + v('em')); if (v('web')) L.push('URL:' + v('web'));
+        L.push('END:VCARD'); return L.join('\n');
+      }
+    }
+    return '';
+  }
+  const lum = hex => { const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+
+  function render() {
+    const data = payload(), canvas = g('qc'), warn = g('warn');
+    warn.textContent = ''; current = null;
+    g('png').disabled = g('svg').disabled = true;
+    if (!data) { canvas.hidden = true; g('empty').hidden = false; return; }
+    let ecl = g('ec').value;
+    if (logo && ecl !== 'H') { ecl = 'H'; g('ec').value = 'H'; warn.textContent = 'Error correction was set to High so the code still scans with a logo.'; }
+    let qr;
+    try { qr = qrcode(0, ecl); qr.addData(data); qr.make(); }
+    catch (e) { canvas.hidden = true; g('empty').hidden = false; g('empty').textContent = 'There is too much information for one QR code. Shorten the text or lower the error correction.'; return; }
+    g('empty').hidden = true; g('empty').textContent = 'Fill in the details to see your QR code.';
+    const fg = g('fg').value, bg = g('bg').value, size = +g('size').value, n = qr.getModuleCount(), m = 4, tot = n + 2 * m, cell = size / tot;
+    const ratio = (Math.max(lum(fg), lum(bg)) + .05) / (Math.min(lum(fg), lum(bg)) + .05);
+    if (lum(fg) > lum(bg)) warn.textContent = 'Light-on-dark codes are not read by every scanner. Dark foreground on a light background is safest.';
+    else if (ratio < 3) warn.textContent = 'These colours are too close together. Some scanners may not read the code.';
+    canvas.width = size; canvas.height = size; canvas.hidden = false;
+    const x = canvas.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, size, size); x.fillStyle = fg;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) {
+      const x0 = Math.round((c + m) * cell), x1 = Math.round((c + m + 1) * cell), y0 = Math.round((r + m) * cell), y1 = Math.round((r + m + 1) * cell);
+      x.fillRect(x0, y0, x1 - x0, y1 - y0);
+    }
+    if (logo) {
+      const L = size * .22, pad = L * .12, lx = (size - L) / 2;
+      x.fillStyle = bg; x.fillRect(lx - pad, lx - pad, L + 2 * pad, L + 2 * pad);
+      const ar = logo.img.naturalWidth / logo.img.naturalHeight || 1, lw = ar >= 1 ? L : L * ar, lh = ar >= 1 ? L / ar : L;
+      x.drawImage(logo.img, (size - lw) / 2, (size - lh) / 2, lw, lh);
+    }
+    current = { qr, n, m, tot, fg, bg, size };
+    g('png').disabled = g('svg').disabled = false;
+  }
+  function svgString() {
+    const { qr, n, m, tot, fg, bg, size } = current; let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+    let lg = '';
+    if (logo) { const L = tot * .22, pad = L * .12, lx = (tot - L) / 2; lg = `<rect x="${lx - pad}" y="${lx - pad}" width="${L + 2 * pad}" height="${L + 2 * pad}" fill="${bg}"/><image href="${logo.data}" x="${lx}" y="${lx}" width="${L}" height="${L}" preserveAspectRatio="xMidYMid meet"/>`; }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${tot} ${tot}" width="${size}" height="${size}" shape-rendering="crispEdges"><rect width="${tot}" height="${tot}" fill="${bg}"/><path fill="${fg}" d="${d}"/>${lg}</svg>`;
+  }
+  g('type').onchange = buildFields;
+  ['size', 'ec', 'fg', 'bg'].forEach(id => g(id).addEventListener('input', render));
+  g('png').onclick = async () => { if (current) saveFile('qr-code.png', await toBlob(g('qc'), 'image/png')); };
+  g('svg').onclick = () => { if (current) saveFile('qr-code.svg', new Blob([svgString()], { type: 'image/svg+xml' })); };
+  g('logo').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 2 * 1048576) { toast('Choose a logo under 2 MB.'); e.target.value = ''; return; }
+    const rd = new FileReader();
+    rd.onload = () => { const img = new Image(); img.onload = () => { logo = { img, data: rd.result }; g('nologo').hidden = false; render(); }; img.onerror = () => toast('That logo could not be read.'); img.src = rd.result; };
+    rd.readAsDataURL(f);
+  };
+  g('nologo').onclick = () => { logo = null; g('logo').value = ''; g('nologo').hidden = true; render(); };
+  buildFields();
+}
+
+/* ---------- tool registry ---------- */
+const TOOLS = [
+  { id: 'image-compressor', name: 'Image Compressor', icon: 'compress', desc: 'Reduce image size without unnecessary quality loss.', h1: 'Image compressor', lead: 'Shrink JPG, PNG and WebP photos for email, forms and websites. Set a quality level or a target file size and compare before and after.', run: h => imageTool(h, 'compress'),
+    faq: [['How does it make files smaller?', 'Your browser re-encodes each image at the quality you choose. Lower quality means smaller files. If you set a target size, the tool searches for the highest quality that fits.'], ['Why did my PNG become WebP?', 'PNG is lossless, so it barely shrinks. In Smart mode PNG files are saved as WebP, which is much smaller. Pick JPG or WebP yourself to control this.'], ['Are my images uploaded?', 'No. Compression happens on your device. Nothing you choose is sent to a server.']] },
+  { id: 'image-resizer', name: 'Image Resizer', icon: 'resize', desc: 'Change width, height or percentage for one image or many.', h1: 'Image resizer', lead: 'Set exact pixel sizes or scale by percentage. Lock the aspect ratio to avoid stretched photos.', run: h => imageTool(h, 'resize'),
+    faq: [['What does lock aspect ratio do?', 'When you type a width, the height is worked out automatically so the picture keeps its proportions.'], ['Will enlarging an image make it sharper?', 'No. Making an image bigger than the original cannot add detail, so it can look soft.'], ['Can I resize many images at once?', 'Yes. Add up to ' + MAX_FILES + ' images and they all use the same settings.']] },
+  { id: 'image-converter', name: 'JPG, PNG and WebP Converter', icon: 'convert', desc: 'Convert between JPG, PNG and WebP in one step.', h1: 'JPG, PNG and WebP converter', lead: 'Switch formats while keeping transparency where the new format supports it. Convert one image or a whole batch.', run: h => imageTool(h, 'convert'),
+    faq: [['Which format should I choose?', 'JPG suits photos. PNG suits graphics, screenshots and anything needing transparency. WebP is usually the smallest and works in all current browsers.'], ['What happens to transparent PNGs?', 'They stay transparent in PNG and WebP. JPG has no transparency, so those areas become white.'], ['WebP output does not work for me.', 'Some older Safari versions cannot create WebP files. Choose PNG or JPG instead.']] },
+  { id: 'jpg-to-pdf', name: 'JPG to PDF', icon: 'pdf', desc: 'Turn photos and scans into one PDF, in the order you choose.', h1: 'JPG to PDF', lead: 'Combine images into a single PDF. Put the pages in order, rotate any that are sideways, and pick the page size.', run: jpgToPdf,
+    faq: [['How do I change the page order?', 'Use the up and down buttons beside each image. The numbers update as you move them.'], ['What is Fit to image?', 'Each page takes the exact shape of its image, with no margins or white space.'], ['Is there a page limit?', 'You can add up to ' + MAX_FILES + ' images per PDF in this version.']] },
+  { id: 'merge-pdf', name: 'Merge PDF', icon: 'merge', desc: 'Join several PDFs into one document.', h1: 'Merge PDF', lead: 'Combine PDF files in any order and download a single document. Your original files are never changed.', run: mergePdf,
+    faq: [['Can I merge password-protected PDFs?', 'Not in this version. Remove the password first, then add the file.'], ['Are my PDFs uploaded?', 'No. Merging happens in your browser, so the files stay on your device.'], ['Does it change the original files?', 'No. A new PDF is created and your originals stay exactly as they were.']] },
+  { id: 'qr-code-generator', name: 'QR Code Generator', icon: 'qr', desc: 'Make QR codes for links, Wi-Fi, contacts and more.', h1: 'QR code generator', lead: 'Create a QR code for a link, text, Wi-Fi network, email, phone number, SMS or contact card. Choose colours, add a logo and download as PNG or SVG.', run: qrTool,
+    faq: [['Do these QR codes expire?', 'No. The information is stored inside the code itself, so it works for as long as the content is valid. There is no tracking and no account.'], ['Which error correction should I use?', 'Medium suits most uses. Use High if you add a logo or the code will be printed small or in rough conditions.'], ['Which download should I pick?', 'PNG for screens and documents. SVG for printing at any size without blur.']] }
+];
+const SOON = [
+  { name: 'PDF to JPG', icon: 'img', desc: 'Turn PDF pages into images.' },
+  { name: 'Compress PDF', icon: 'compress', desc: 'Make PDF files smaller.' },
+  { name: 'HEIC to JPG', icon: 'convert', desc: 'Convert iPhone photos.' },
+  { name: 'Image to Text', icon: 'text', desc: 'Extract text from pictures with OCR.' }
+];
+
+/* ---------- views ---------- */
+const app = $('#app');
+function toolGrid() {
+  return `<ul class="tools">${TOOLS.map(t => `<li><a href="#/${t.id}"><span class="ic">${icon(t.icon)}</span><span><b>${t.name}</b><span class="d">${t.desc}</span></span></a></li>`).join('')}
+  ${SOON.map(t => `<li><div class="soon"><span class="ic">${icon(t.icon)}</span><span><b>${t.name}</b><span class="d">${t.desc}</span><span class="tag">Coming next</span></span></div></li>`).join('')}</ul>`;
+}
+function home() {
+  document.title = 'FilePro Tools — Simple tools for your everyday files';
+  app.innerHTML = `<section class="hero"><h1>Your everyday file tools, all in one place</h1>
+    <p class="sub">Convert, compress, resize, merge, and transform your files quickly and easily.</p>
+    <div class="herodrop" id="hd"></div></section>
+    <h2 class="sec-title" id="tools">Tools</h2>${toolGrid()}
+    <p class="note">Your files are private. Everything here runs in your browser, so nothing you select is uploaded. PDF to JPG, Compress PDF, HEIC to JPG and Image to Text are being built next.</p>`;
+  dropzone($('#hd'), { accept: { attr: 'image/*,.pdf', test: f => ACCEPT_IMG.test(f) || ACCEPT_PDF.test(f), word: 'JPG, PNG, WebP or PDF files' }, title: 'Drop images or PDFs to get started', hint: 'Images open in the Image Compressor. PDFs open in Merge PDF.', onFiles: files => {
+    PENDING = files;
+    location.hash = files.every(ACCEPT_PDF.test) ? '#/merge-pdf' : files.every(ACCEPT_IMG.test) ? '#/image-compressor' : '#/';
+    if (!files.every(ACCEPT_PDF.test) && !files.every(ACCEPT_IMG.test)) { PENDING = null; toast('Drop only images or only PDFs at one time.'); }
+  } });
+}
+function toolsPage() {
+  document.title = 'All tools — FilePro Tools';
+  app.innerHTML = `<section class="tp"><a class="crumb" href="#/">Home</a><h1 tabindex="-1">All tools</h1><p class="lead">Every tool runs in your browser, so your files stay on your device.</p>${toolGrid()}</section>`;
+}
+function toolPage(t) {
+  document.title = t.name + ' — FilePro Tools';
+  app.innerHTML = `<section class="tp"><a class="crumb" href="#/tools">All tools</a><h1 tabindex="-1">${t.h1}</h1><p class="lead">${t.lead}</p><div id="tool"></div>
+    <div class="about"><h2>Questions</h2>${t.faq.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>
+    <div class="about"><h2>Privacy</h2><p>Your files are private. This tool works inside your browser, so your files are not uploaded anywhere.</p></div></section>`;
+  t.run($('#tool'));
+}
+function route() {
+  const id = (location.hash.replace(/^#\/?/, '') || '').split('?')[0];
+  const t = TOOLS.find(x => x.id === id);
+  if (t) toolPage(t); else if (id === 'tools') toolsPage(); else home();
+  window.scrollTo({ top: 0 });
+  const h = $('h1', app); if (h && t) h.focus({ preventScroll: true });
+}
+window.addEventListener('hashchange', route);
+$('#flinks').innerHTML = TOOLS.map(t => `<a href="#/${t.id}">${t.name}</a>`).join('');
+
+/* ---------- theme ---------- */
+(function () {
+  const modes = ['auto', 'light', 'dark'], labels = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+  let m = 'auto';
+  try { m = localStorage.getItem('fp-theme') || 'auto'; } catch (e) {}
+  if (!modes.includes(m)) m = 'auto';
+  const btn = $('#theme');
+  function apply() {
+    if (m === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', m);
+    btn.textContent = labels[m]; btn.setAttribute('aria-label', 'Colour theme: ' + labels[m] + '. Press to change.');
+  }
+  btn.onclick = () => { m = modes[(modes.indexOf(m) + 1) % 3]; try { localStorage.setItem('fp-theme', m); } catch (e) {} apply(); };
+  apply();
+})();
+route();
+</script>
+</body>
+</html>
